@@ -51,7 +51,8 @@ dependencies:
   socket_io_client: ^3.0.0
   flutter_secure_storage: ^9.2.2
   permission_handler: ^11.3.1
-  contacts_service: ^0.6.1
+  # contacts_service: ^0.6.1
+  flutter_contacts: ^1.1.9+2
 
 dev_dependencies:
   flutter_test:

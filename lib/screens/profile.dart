@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pexllite/helpers/helper_functions.dart';
+import 'package:pexllite/screens/home.dart';
 import 'dart:io';
 import 'package:pexllite/screens/welcome.dart';
 import 'dart:convert';
@@ -19,18 +20,48 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController profilePicController = TextEditingController();
+  final TextEditingController phoneNumberController = TextEditingController();
 
-  String phoneNumber = '';
+  String profilePicUrl = '';
   XFile? _profileImage;
+  bool isLoadingDetails = false;
 
   @override
   void initState() {
     super.initState();
     getDetails();
   }
-  void getDetails() async{
-    
+
+  void getDetails() async {
+    if (isLoadingDetails) return;
+    setState(() => isLoadingDetails = true);
+    try {
+      final response = await http.get(
+        Uri.parse('http://192.168.29.50:3500/api/v1/user/getuser'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          phoneNumberController.text = data['phoneNumber'].toString();
+          firstNameController.text = data['firstName'];
+          lastNameController.text = data['lastName'];
+          profilePicUrl = data['profilePic'];
+        });
+
+        // Fluttertoast.showToast(msg: "User details loaded successfully!");
+      } else {
+        // Fluttertoast.showToast(msg: "Failed to load user details");
+      }
+    } catch (e) {
+      // Fluttertoast.showToast(msg: "Server not found");
+    }finally{
+       setState(() => isLoadingDetails = false);
+    }
   }
 
   // Function to pick an image from gallery
@@ -42,6 +73,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _profileImage = pickedImage;
       });
+    }
+  }
+
+  Future<void> updateProfile() async {
+    String firstName = firstNameController.text;
+    String lastName = lastNameController.text;
+     print("Sending data - firstName: $firstName, lastName: $lastName");
+    try {
+      var response = await http.post(
+        Uri.parse('http://192.168.29.50:3500/api/v1/user/update'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',  // Ensure JSON content type
+        },
+        body: jsonEncode({"firstName": firstName, "lastName": lastName}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          firstNameController.text = data['firstName'];
+          lastNameController.text = data['lastName'];
+        });
+        // Fluttertoast.showToast(msg: "Profile updated successfully!");
+      } else {
+        // Fluttertoast.showToast(msg: "Failed to update profile.");
+      }
+    } catch (e) {
+      // Fluttertoast.showToast(msg: "Error updating profile.");
     }
   }
 
@@ -59,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -70,11 +130,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundImage: _profileImage != null
-                          ? FileImage(File(_profileImage!.path))
-                          : const AssetImage(
-                                  'assets/images/default_profile.png')
-                              as ImageProvider,
+                      // Use random color or set it here
+                      backgroundImage: profilePicUrl.isNotEmpty
+                          ? NetworkImage(profilePicUrl) as ImageProvider
+                          : null,
+                      child: profilePicUrl.isEmpty
+                          ? Icon(Icons.home, size: 50, color: Colors.white)
+                          : null,
                     ),
                     Positioned(
                       bottom: 0,
@@ -122,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               // Phone Number (Not editable)
               TextFormField(
-                initialValue: phoneNumber,
+                controller: phoneNumberController,
                 readOnly: true,
                 decoration: const InputDecoration(
                   labelText: 'Phone Number',
@@ -133,56 +195,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Save Button
               Center(
                 child: ElevatedButton(
-                  onPressed: () async {
-                    // Save updated profile info logic here
-                    String firstName = firstNameController.text;
-                    String lastName = lastNameController.text;
-
-                    print("First Name: $firstName");
-                    print("Last Name: $lastName");
-                    print("the profile picture $_profileImage");
-                    try {
-                      final response = await http.post(
-                        Uri.parse(
-                            'http://192.168.29.50:3000/api/v1/user/update'),
-                        headers: {"Content-Type": "application/json"},
-                        body: jsonEncode({
-                          "firstName": firstName,
-                          "lastName": lastName,
-                          "profilePic": _profileImage
-                        }),
-                      );
-
-                      if (response.statusCode == 200) {
-                        // Save the user Data to the system
-                        await HelperFunctions.saveUserFirstNameSharedPreference(
-                            firstName);
-                        await HelperFunctions.saveUserLastNameSharedPreference(
-                            lastName);
-                        Fluttertoast.showToast(msg: "Successfully Updated");
-                      } else {
-                        Fluttertoast.showToast(
-                            msg: "Not Able to Update The Details");
-                      }
-                    } catch (e) {
-                      Fluttertoast.showToast(
-                          msg: "Not Able to Update The Details");
-                    }
-                  },
+                  onPressed: updateProfile,
                   child: const Text('Save Changes'),
                 ),
               ),
               const SizedBox(height: 30),
-              // Save Button
+              // Logout Button
               Center(
                 child: ElevatedButton(
                   onPressed: () async {
-                    // Save updated profile info logic here
-                    await HelperFunctions.saveUserLoggedInSharedPreference(
-                        false);
-                    await HelperFunctions.saveUserPhoneSharedPreference('');
-                    await HelperFunctions.saveUserFirstNameSharedPreference('');
-                    await HelperFunctions.saveUserLastNameSharedPreference('');
+                    // await HelperFunctions.saveUserLoggedInSharedPreference(false);
+                    // await HelperFunctions.saveUserPhoneSharedPreference('');
+                    // await HelperFunctions.saveUserFirstNameSharedPreference('');
+                    // await HelperFunctions.saveUserLastNameSharedPreference('');
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (context) => WelcomeScreen()),
@@ -198,6 +223,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-  
-  
 }

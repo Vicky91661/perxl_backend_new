@@ -28,23 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
-    _fetchGroups();
-  }
-
-  Future<void> _fetchUserData() async {
-    try {
-      final response = await http.get(Uri.parse('YOUR_API_ENDPOINT'), headers: {
-        'Authorization': 'Bearer ${widget.token}',
-      });
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        Provider.of<UserProvider>(context, listen: false).setUser(data['user']);
-      }
-    } catch (e) {
-      print("Error fetching user data: $e");
-    }
+    // _fetchGroups();
   }
 
   Future<void> _fetchGroups() async {
@@ -66,32 +50,56 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _onItemTapped(int index) {
-    setState(() => _selectedIndex = index);
-    switch (index) {
-      case 0:
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => HomeScreen(token: widget.token)));
-        break;
-      case 1:
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => ProfileScreen(token: widget.token)));
-        break;
-      case 2:
-        // Make Group
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => MakeGroupScreen(token: widget.token)));
-        break;
-      default:
-        break;
+  void _onItemTapped(int index) async{
+    if (index == 1) {
+    // Navigate to ProfileScreen and await the returned index
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(token: widget.token),
+        ),
+      );
+      
+      // Set selected index based on the result or default to Home
+      setState(() => _selectedIndex = result ?? 0);
+    } else if (index == 2) {
+      // Navigate to MakeGroupScreen
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MakeGroupScreen(token: widget.token),
+        ),
+      );
+    } else {
+      // Default behavior for Home
+      setState(() => _selectedIndex = index);
     }
   }
+    // setState(() => _selectedIndex = index);
+    // switch (index) {
+    //   case 0:
+    //     Navigator.pushReplacement(
+    //         context,
+    //         MaterialPageRoute(
+    //             builder: (context) => HomeScreen(token: widget.token)));
+    //     break;
+    //   case 1:
+    //     Navigator.push(
+    //         context,
+    //         MaterialPageRoute(
+    //             builder: (context) => ProfileScreen(token: widget.token)));
+    //     break;
+    //   case 2:
+    //     // Make Group
+    //     Navigator.push(
+    //         context,
+    //         MaterialPageRoute(
+    //             builder: (context) => MakeGroupScreen(token: widget.token)));
+    //     break;
+    //   default:
+    //     break;
+    // }
+  // }
 
   Future<void> _handleSearch(String query) async {
     setState(() => searchQuery = query);

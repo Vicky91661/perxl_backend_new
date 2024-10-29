@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -52,7 +52,7 @@ class _MakeGroupScreenState extends State<MakeGroupScreen> {
 
   void getContact() async {
     Iterable<Contact> contacts =
-        await ContactsService.getContacts(withThumbnails: false);
+        await FlutterContacts.getContacts(withThumbnail: false);
     setState(() {
       phoneContacts = contacts.toList();
     });
@@ -77,8 +77,7 @@ class _MakeGroupScreenState extends State<MakeGroupScreen> {
           String backendPhone = backendContact[
               'phoneNumber']; // Assuming each backend contact has a 'phone' field
           return phoneContacts.any((phoneContact) =>
-              phoneContact.phones?.any((p) => p.value == backendPhone) ??
-              false);
+              phoneContact.phones.any((p) => p.number == backendPhone));
         }).toList();
 
         filteredContacts =

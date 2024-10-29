@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pexllite/screens/home.dart';
-import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
 // import 'package:pexllite/screens/login.dart';
 // import 'package:pexllite/screens/otp.dart';
@@ -38,23 +38,34 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     // _getUserLoggedInStatus();
-    // _fetchPhoneContacts();
+    _fetchPhoneContacts();
   }
 
-  void getContact() async {
-    Iterable<Contact> contacts =
-        await ContactsService.getContacts();
-    setState(() {
-      phoneContacts = contacts.toList();
-    });
-  }
+ // Function to request contacts permission and fetch contacts
   Future<void> _fetchPhoneContacts() async {
-    // Request permission and fetch contacts from the phone
-    if (await Permission.contacts.isGranted) {
-      // Fetch Contact
-      getContact();
-    } else {
-      await Permission.contacts.request();
+    final permissionStatus = await Permission.contacts.status;
+    if (permissionStatus.isGranted) {
+      // If permission is granted, fetch the contacts
+      await _getContacts();
+    } else if (permissionStatus.isDenied) {
+      // Request permission if not already granted
+      if (await Permission.contacts.request().isGranted) {
+        await _getContacts();
+      } else {
+        setState(() {
+          phoneContacts = []; // Set empty if permission is denied
+        });
+      }
+    }
+  }
+
+  // Function to fetch contacts from the phone
+  Future<void> _getContacts() async {
+    try {
+      List<Contact> contacts = await FlutterContacts.getContacts(withProperties: true);
+      setState(() => phoneContacts = contacts);
+    } catch (e) {
+      print("Error fetching contacts: $e");
     }
   }
 
