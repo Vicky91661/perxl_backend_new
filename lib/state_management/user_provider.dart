@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 
 class UserProvider with ChangeNotifier {
   String id = '';
-  String email = '';
+  String phoneNumber = '';
   String profilePic = '';
-  String name = '';
+  String firstName = '';
+  String lastName = '';
 
   void setUser(Map<String, dynamic> userData) {
-    id = userData['id'] ?? '';
-    email = userData['email'] ?? '';
+    id = userData['_id'] ?? '';
+    phoneNumber = userData['phoneNumber'] ?? '';
     profilePic = userData['profilePic'] ?? '';
-    name = userData['name'] ?? '';
+    firstName = userData['firstName'] ?? '';
+    lastName = userData['lastName'] ?? '';
     notifyListeners();
   }
 }

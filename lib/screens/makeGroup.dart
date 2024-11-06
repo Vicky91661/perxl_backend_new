@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+// import 'package:flutter_contacts/flutter_contacts.dart';
+// import 'package:permission_handler/permission_handler.dart';
+// import 'package:http/http.dart' as http;
+// import 'dart:convert';
 
 import 'package:pexllite/screens/confirmMakeGroup.dart';
+import 'package:pexllite/state_management/contact_provider.dart';
+import 'package:provider/provider.dart';
 
 class MakeGroupScreen extends StatefulWidget {
   final String token;
 
-  const MakeGroupScreen({Key? key, required this.token}) : super(key: key);
+  const MakeGroupScreen({super.key, required this.token});
 
   @override
   _MakeGroupScreenState createState() => _MakeGroupScreenState();
 }
 
 class _MakeGroupScreenState extends State<MakeGroupScreen> {
-  List<dynamic> backendContacts = []; // Contacts from backend
-  List<Contact> phoneContacts = []; // Contacts from phone
-  List<dynamic> intersectedContacts = []; // Intersected contacts to display
   List<dynamic> selectedContacts = []; // Track selected contacts
   List<dynamic> filteredContacts = []; // For search filtering
   String searchQuery = '';
@@ -26,75 +25,35 @@ class _MakeGroupScreenState extends State<MakeGroupScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchBackendContacts();
-    _fetchPhoneContacts();
-  }
 
-  Future<void> _fetchBackendContacts() async {
-    // Fetch contacts from the backend
-    try {
-      final response =
-          await http.get(Uri.parse('/api/v1/user/allusers'), headers: {
-        'Authorization': 'Bearer ${widget.token}',
-      });
-
-      if (response.statusCode == 200) {
-        setState(() {
-          backendContacts = jsonDecode(
-              response.body); // Assuming response is a list of contacts
-        });
-        _findIntersectedContacts();
-      }
-    } catch (e) {
-      print("Error fetching contacts from backend: $e");
-    }
-  }
-
-  void getContact() async {
-    Iterable<Contact> contacts =
-        await FlutterContacts.getContacts(withThumbnail: false);
-    setState(() {
-      phoneContacts = contacts.toList();
-    });
-  }
-
-  Future<void> _fetchPhoneContacts() async {
-    // Request permission and fetch contacts from the phone
-    if (await Permission.contacts.isGranted) {
-      // Fetch Contact
-      getContact();
-       _findIntersectedContacts();
-    } else {
-      await Permission.contacts.request();
-    }
-  }
-
-  void _findIntersectedContacts() {
-    if (backendContacts.isNotEmpty && phoneContacts.isNotEmpty) {
-      // Find intersection between backend contacts and phone contacts by phone number
-      setState(() {
-        intersectedContacts = backendContacts.where((backendContact) {
-          String backendPhone = backendContact[
-              'phoneNumber']; // Assuming each backend contact has a 'phone' field
-          return phoneContacts.any((phoneContact) =>
-              phoneContact.phones.any((p) => p.number == backendPhone));
-        }).toList();
-
-        filteredContacts =
-            intersectedContacts; // Initialize filtered contacts for display
-      });
-    }
+    _filterIntersectedContacts(); // Initialize filtered contacts with intersectedContacts
   }
 
   void _handleSearch(String query) {
     setState(() {
       searchQuery = query;
-      filteredContacts = intersectedContacts
+      filteredContacts = Provider.of<ContactProvider>(context, listen: false)
+          .intersectedContacts
           .where((contact) =>
-              contact['name'].toLowerCase().contains(query.toLowerCase()) ||
-              contact['phone'].contains(query))
+              contact['firstName']
+                  .toLowerCase()
+                  .contains(query.toLowerCase()) ||
+              contact['lastName'].toLowerCase().contains(query.toLowerCase()) ||
+              contact['phoneNumber'].contains(query))
           .toList();
     });
+  }
+
+  // Initialize filteredContacts with intersectedContacts initially
+  void _filterIntersectedContacts() {
+    List<dynamic> intersectedContacts =
+        Provider.of<ContactProvider>(context, listen: false)
+            .intersectedContacts;
+    setState(() {
+      filteredContacts = intersectedContacts;
+    });
+    print("The intersected contact is  INSDIE THE MAKE GROUPS $intersectedContacts");
+
   }
 
   void _toggleSelection(dynamic contact) {
@@ -158,10 +117,9 @@ class _MakeGroupScreenState extends State<MakeGroupScreen> {
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundImage: NetworkImage(
-                        contact['photo'] ?? 'https://via.placeholder.com/150'),
+                        contact['profilePic']),
                   ),
-                  title: Text(contact['name']),
-                  subtitle: Text(contact['status'] ?? ''),
+                  title: Text(contact['firstName']+" "+contact['lastName']),
                   trailing: Checkbox(
                     value: isSelected,
                     onChanged: (_) => _toggleSelection(contact),

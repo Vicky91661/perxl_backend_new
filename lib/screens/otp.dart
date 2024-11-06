@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:pexllite/constants.dart';
 import 'home.dart';
-// import 'package:pexllite/helpers/helper_functions.dart';
+import 'package:pexllite/helpers/helper_functions.dart';
 
 const primary = Color(0xff072227);
 const secondary = Color(0xff35858B);
@@ -98,15 +99,15 @@ class _OTPScreenState extends State<OTPScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    // const SizedBox(
-                    //   height: 150,
-                    //   child: Image(
-                    //     image: AssetImage("assets/images/logo.png"),
-                    //     width: 90,
-                    //     height: 90,
-                    //     fit: BoxFit.contain,
-                    //   ),
-                    // ),
+                    const SizedBox(
+                      height: 150,
+                      child: Image(
+                        image: AssetImage("assets/images/logo.png"),
+                        width: 90,
+                        height: 90,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                     const SizedBox(height: 35),
                     Text(
                       "OTP has been sent to ${widget.phoneNumber}",
@@ -132,41 +133,35 @@ class _OTPScreenState extends State<OTPScreen> {
       // Call your backend API to verify the OTP
       try {
         final response = await http.post(
-          Uri.parse('http://192.168.29.50:3500/api/v1/user/verifyotp'),
+          Uri.parse('$baseurl/user/verifyotp'),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({"phoneNumber": phoneNumber, "otp": otp}),
         );
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
-          // Assuming `data` contains the user information
 
-          String userPhone = data['phoneNumber'];
-          String firstName = data['firstName'];
-          String lastName = data['lastName'];
+          // Assuming `data` contains the user information
           String token = data['token'];
-          print("the phone number is $userPhone");
-          print("the firstName  is $firstName");
-          print("the lastName is $lastName");
           print("the token is $token");
-          // Fluttertoast.showToast(msg: "OTP Verified Successfully!");
+
+          Fluttertoast.showToast(msg: "OTP Verified Successfully!");
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => HomeScreen(token: token,)),
+            MaterialPageRoute(
+                builder: (context) => HomeScreen()),
             (Route<dynamic> route) => false,
           );
           // Save the user Data to the system
-          // await HelperFunctions.saveUserLoggedInSharedPreference(true);
-          // if (userPhone != null) {
-          //   await HelperFunctions.saveUserPhoneSharedPreference(userPhone);
-          // }
-          // if (firstName != null) {
-          //   await HelperFunctions.saveUserFirstNameSharedPreference(firstName);
-          // }
-          // if (lastName != null) {
-          //   await HelperFunctions.saveUserLastNameSharedPreference(lastName);
-          // }
-        } else {}
+          await HelperFunctions.saveUserLoggedInSharedPreference(true);
+          if (token != null) {
+            await HelperFunctions.saveUserTokenSharedPreference(token);
+          }
+        } else {
+          final data = jsonDecode(response.body);
+          final message = data['message'][0];
+          Fluttertoast.showToast(msg: message);
+        }
       } catch (e) {
         Fluttertoast.showToast(msg: "Server not found");
       }

@@ -67,15 +67,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 activeColor: Theme.of(context).primaryColor,
                 value: task.status == 1 ? true : false,
               ),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AddTaskScreen(
-                    updateTaskList: _updateTaskList,
-                    task: task,
-                  ),
-                ),
-              ),
+              // onTap: () => Navigator.push(
+              //   context,
+              //   MaterialPageRoute(
+              //     builder: (_) => AddTaskScreen(
+              //       updateTaskList: _updateTaskList,
+              //       task: task,
+              //     ),
+              //   ),
+              // ),
             ),
         ],
       ),
@@ -139,7 +139,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            'You have completed [ $completedTaskCount ] tasks',
+                            'You have completed $completedTaskCount tasks',
                             style: TextStyle(
                               color: Colors.blueGrey,
                               fontSize: 15.0,

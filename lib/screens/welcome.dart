@@ -18,11 +18,11 @@ class WelcomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               // Logo image
-              // SvgPicture.asset(
-              //   'assets/images/chat.svg', // Replace with your logo path
-              //   height: 150, // Adjust the size according to your needs
-              // ),
-              // const SizedBox(height: 20),
+              SvgPicture.asset(
+                'assets/images/chat.svg', // Replace with your logo path
+                height: 150, // Adjust the size according to your needs
+              ),
+              const SizedBox(height: 20),
               // Welcome text
               const Text(
                 "Welcome to Perxl",

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:pexllite/constants.dart';
 import 'otp.dart';
 
 // Defining Colors
@@ -20,9 +21,6 @@ class RegistrationScreen extends StatefulWidget {
 class RegistrationScreenState extends State<RegistrationScreen> {
   // Defining a Form Key
   final _formKey = GlobalKey<FormState>();
-
-  // Firebase Auth
-  // final _auth = FirebaseAuth.instance;
 
   // Defining Editing Controller
   final TextEditingController firstNameEditingController =
@@ -165,15 +163,15 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    // const SizedBox(
-                    //   height: 150,
-                    //   child: Image(
-                    //     image: AssetImage("assets/images/logo.png"),
-                    //     width: 80,
-                    //     height: 80,
-                    //     fit: BoxFit.contain,
-                    //   ),
-                    // ),
+                    const SizedBox(
+                      height: 150,
+                      child: Image(
+                        image: AssetImage("assets/images/logo.png"),
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                     firstNameField,
                     const SizedBox(height: 15),
                     lastNameField,
@@ -203,7 +201,7 @@ class RegistrationScreenState extends State<RegistrationScreen> {
       print("insdie the signin the form is valid");
       try {
         final response = await http.post(
-          Uri.parse('http://192.168.29.50:3500/api/v1/user/signup'),
+          Uri.parse('$baseurl/user/signup'),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({
             "phoneNumber": phoneNumber,

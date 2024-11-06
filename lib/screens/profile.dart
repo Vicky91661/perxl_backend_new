@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pexllite/constants.dart';
 import 'package:pexllite/helpers/helper_functions.dart';
 import 'package:pexllite/screens/home.dart';
 import 'dart:io';
@@ -37,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => isLoadingDetails = true);
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.29.50:3500/api/v1/user/getuser'),
+        Uri.parse('$baseurl/user/getuser'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -53,14 +54,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           profilePicUrl = data['profilePic'];
         });
 
-        // Fluttertoast.showToast(msg: "User details loaded successfully!");
+        Fluttertoast.showToast(msg: "User details loaded successfully!");
       } else {
-        // Fluttertoast.showToast(msg: "Failed to load user details");
+        Fluttertoast.showToast(msg: "Failed to load user details");
       }
     } catch (e) {
-      // Fluttertoast.showToast(msg: "Server not found");
-    }finally{
-       setState(() => isLoadingDetails = false);
+      Fluttertoast.showToast(msg: "Server not found");
+    } finally {
+      setState(() => isLoadingDetails = false);
     }
   }
 
@@ -79,13 +80,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> updateProfile() async {
     String firstName = firstNameController.text;
     String lastName = lastNameController.text;
-     print("Sending data - firstName: $firstName, lastName: $lastName");
+    //  print("Sending data - firstName: $firstName, lastName: $lastName");
     try {
       var response = await http.post(
-        Uri.parse('http://192.168.29.50:3500/api/v1/user/update'),
+        Uri.parse('$baseurl/user/update'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',  // Ensure JSON content type
+          'Content-Type': 'application/json', // Ensure JSON content type
         },
         body: jsonEncode({"firstName": firstName, "lastName": lastName}),
       );
@@ -96,12 +97,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           firstNameController.text = data['firstName'];
           lastNameController.text = data['lastName'];
         });
-        // Fluttertoast.showToast(msg: "Profile updated successfully!");
+        Fluttertoast.showToast(msg: "Profile updated successfully!");
       } else {
-        // Fluttertoast.showToast(msg: "Failed to update profile.");
+        Fluttertoast.showToast(msg: "Failed to update profile.");
       }
     } catch (e) {
-      // Fluttertoast.showToast(msg: "Error updating profile.");
+      Fluttertoast.showToast(msg: "Error updating profile.");
     }
   }
 
@@ -204,10 +205,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Center(
                 child: ElevatedButton(
                   onPressed: () async {
-                    // await HelperFunctions.saveUserLoggedInSharedPreference(false);
-                    // await HelperFunctions.saveUserPhoneSharedPreference('');
-                    // await HelperFunctions.saveUserFirstNameSharedPreference('');
-                    // await HelperFunctions.saveUserLastNameSharedPreference('');
+                    await HelperFunctions.saveUserLoggedInSharedPreference(
+                        false);
+                    await HelperFunctions.saveUserTokenSharedPreference('');
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (context) => WelcomeScreen()),

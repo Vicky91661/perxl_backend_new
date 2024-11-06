@@ -1,14 +1,19 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pexllite/constants.dart';
+import 'package:pexllite/helpers/helper_functions.dart';
 
 class ChatApiService {
   final storage = FlutterSecureStorage();
-  final String baseUrl = 'http://localhost:3000/api/v1/';
+  final String baseUrl = baseurl;
 
   Future<Map<String, String>> _getHeaders() async {
-    String? token = await storage.read(key: 'userToken');
-    return {'Authorization': token ?? ''};
+    String? token = await HelperFunctions.getUserTokenSharedPreference();
+    return {
+      'Authorization': token ?? '',
+      'Content-Type': 'application/json',
+    };
   }
 
   Future<dynamic> fetchAllChats() async {
@@ -24,21 +29,7 @@ class ChatApiService {
     }
   }
 
-  Future<dynamic> createGroup(Map<String, dynamic> body) async {
-    try {
-      var headers = await _getHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/chat/create'),
-        headers: headers,
-        body: jsonEncode(body),
-      );
-      return jsonDecode(response.body);
-    } catch (error) {
-      print('Error in sendMessage API: $error');
-    }
-  }
-
-  Future<dynamic> addToGroup(Map<String, dynamic> body)async {
+  Future<dynamic> addToGroup(Map<String, dynamic> body) async {
     try {
       var headers = await _getHeaders();
       final response = await http.post(
@@ -50,7 +41,6 @@ class ChatApiService {
     } catch (error) {
       print('Error in sendMessage API: $error');
     }
-    
   }
 
   Future<dynamic> renameGroup(Map<String, dynamic> body) async {
@@ -67,8 +57,8 @@ class ChatApiService {
     }
   }
 
-  Future<dynamic> removeUser(Map<String, dynamic> body) async{
-     try {
+  Future<dynamic> removeUser(Map<String, dynamic> body) async {
+    try {
       var headers = await _getHeaders();
       final response = await http.post(
         Uri.parse('$baseUrl/api/chat/group/remove'),
@@ -80,12 +70,4 @@ class ChatApiService {
       print('Error in sendMessage API: $error');
     }
   }
-
- 
-
- 
- 
-
- 
-
 }

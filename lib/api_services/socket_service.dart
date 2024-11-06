@@ -2,15 +2,13 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class SocketService {
   late IO.Socket socket;
-  final String baseUrl = const String.fromEnvironment('REACT_APP_SERVER_URL');
+  final String baseUrl = 'http://localhost:3500';
 
   void connect(String userId) {
     socket = IO.io(
       baseUrl,
       IO.OptionBuilder()
-          .setTransports(['websocket'])
-          .setQuery({'userId': userId})
-          .build(),
+          .setTransports(['websocket']).setQuery({'userId': userId}).build(),
     );
 
     socket.onConnect((_) {

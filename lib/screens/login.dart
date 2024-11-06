@@ -2,6 +2,7 @@
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:pexllite/constants.dart';
 import 'registration.dart';
 import 'otp.dart';
 import 'dart:convert';
@@ -152,7 +153,7 @@ class LoginScreenState extends State<LoginScreen> {
       print("inside the signin the form is valid");
       try {
         final response = await http.post(
-          Uri.parse('http://192.168.29.50:3500/api/v1/user/signin'),
+          Uri.parse('$baseurl/user/signin'),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({"phoneNumber": phoneNumber}),
         );
