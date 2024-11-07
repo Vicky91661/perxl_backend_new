@@ -32,14 +32,14 @@ class MessageApiService {
     }
   }
 
-  Future<List<Map<String, dynamic>>?> fetchMessages(String groupId) async {
+  Future<List<Map<String, dynamic>>?> fetchMessages(String taskId) async {
     try {
       print(
-          "The group id inside the fetchMessages of message api service is $groupId");
+          "The group id inside the fetchMessages of message api service is $taskId");
       var headers = await _getHeaders();
       print("The Header is $headers");
       final response = await http.get(
-        Uri.parse('$baseUrl/message/fetchMessages?groupId=$groupId'),
+        Uri.parse('$baseUrl/message/fetchMessages?taskId=$taskId'),
         headers: headers,
       );
 
@@ -54,6 +54,44 @@ class MessageApiService {
     } catch (error) {
       print('Error in fetchMessages API: $error');
       return [];
+    }
+  }
+
+  Future<dynamic> sendFileMessage(Map<String, dynamic> body) async {
+    try {
+      String? filePath = body['filePath'];
+      var request = http.MultipartRequest(
+          'POST', Uri.parse('$baseUrl/message/sendfilemessage'));
+
+      // Add headers
+      var headers = await _getHeaders();
+      request.headers.addAll(headers);
+
+      // Add text fields
+      request.fields['taskId'] = body['taskId'];
+      if (body['message'] != null) {
+        request.fields['message'] = body['message'];
+      }
+
+      // Attach file if path is provided
+      if (filePath != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'file',
+          filePath,
+        ));
+      }
+
+      // Send request
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+      print("THE RESPONSE I GOT FROM FILE UPLOAD FUNCTION IS ${jsonDecode(response.body)}");
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body); // Return the parsed response
+      } else {
+        print('Error in sendFileMessage API: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error in sendFileMessage API: $error');
     }
   }
 }

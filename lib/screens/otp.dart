@@ -143,20 +143,19 @@ class _OTPScreenState extends State<OTPScreen> {
 
           // Assuming `data` contains the user information
           String token = data['token'];
-          print("the token is $token");
+          String currentUserId = data['userId'];
+          print("the token and current user id is $token and $currentUserId");
 
           Fluttertoast.showToast(msg: "OTP Verified Successfully!");
+          await HelperFunctions.saveUserLoggedInSharedPreference(true);
+          await HelperFunctions.saveUserTokenSharedPreference(token);
+          await HelperFunctions.saveUserIdSharedPreference(currentUserId);
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-                builder: (context) => HomeScreen()),
+            MaterialPageRoute(builder: (context) => HomeScreen()),
             (Route<dynamic> route) => false,
           );
           // Save the user Data to the system
-          await HelperFunctions.saveUserLoggedInSharedPreference(true);
-          if (token != null) {
-            await HelperFunctions.saveUserTokenSharedPreference(token);
-          }
         } else {
           final data = jsonDecode(response.body);
           final message = data['message'][0];

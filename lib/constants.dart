@@ -5,4 +5,6 @@ const kPrimaryLightColor = Color.fromARGB(255, 199, 151, 232);
 
 const double defaultPadding = 16.0;
 
-const String baseurl = "http://192.168.166.95:3500/api/v1";
+const String baseurl = "http://192.168.126.95:3500/api/v1";
+// 192.168.166.95
+// 192.168.126.95
