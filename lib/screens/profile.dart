@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:pexllite/screens/welcome.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:file_picker/file_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String token;
@@ -24,13 +25,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController phoneNumberController = TextEditingController();
 
   String profilePicUrl = '';
-  XFile? _profileImage;
+  String? _profileImage;
   bool isLoadingDetails = false;
 
   @override
   void initState() {
     super.initState();
     getDetails();
+  }
+
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png'],
+    );
+
+    if (result != null) {
+      setState(() {
+        _profileImage = result.files.single.path;
+      });
+    }
+    print("The image is $_profileImage");
   }
 
   void getDetails() async {
@@ -66,16 +82,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Function to pick an image from gallery
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? pickedImage =
-        await picker.pickImage(source: ImageSource.gallery);
-    if (pickedImage != null) {
-      setState(() {
-        _profileImage = pickedImage;
-      });
-    }
-  }
+  // Future<void> _pickImage() async {
+  //   final ImagePicker picker = ImagePicker();
+  //   final XFile? pickedImage =
+  //       await picker.pickImage(source: ImageSource.gallery);
+  //   if (pickedImage != null) {
+  //     setState(() {
+  //       _profileImage = pickedImage;
+  //     });
+  //   }
+  // }
 
   Future<void> updateProfile() async {
     String firstName = firstNameController.text;
@@ -143,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       bottom: 0,
                       right: 0,
                       child: InkWell(
-                        onTap: _pickImage,
+                        onTap: _pickFile,
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(

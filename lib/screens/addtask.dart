@@ -5,15 +5,21 @@ import 'package:intl/intl.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pexllite/constants.dart';
 import 'package:pexllite/helpers/helper_functions.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+
 
 class AddTaskScreen extends StatefulWidget {
   final String groupId;
 
+
   const AddTaskScreen({Key? key, required this.groupId}) : super(key: key);
+
 
   @override
   _AddTaskScreenState createState() => _AddTaskScreenState();
 }
+
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
@@ -22,20 +28,47 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final TextEditingController _dueDateController = TextEditingController();
   String _priority = '';
   String _token = '';
-  final List<String> _priorities = [
-    "Low",
-    "Normal",
-    "Medium",
-    "High",
-    "Critical"
-  ];
+  final List<String> _priorities = ["Low", "Normal", "Medium", "High", "Critical"];
   final DateFormat _dateFormatter = DateFormat('MMM dd, yyyy');
+  final SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  String _wordsSpoken = "";
+
 
   @override
   void initState() {
     super.initState();
     _fetchToken();
+    initSpeech();
   }
+
+
+  void initSpeech() async {
+    bool speechEnabledResult = await _speechToText.initialize();
+    setState(() {
+      _speechEnabled = speechEnabledResult;
+    });
+  }
+
+
+  void _startListening() async {
+    await _speechToText.listen(onResult: _onSpeechResult);
+  }
+
+
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {});
+  }
+
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _wordsSpoken = result.recognizedWords;
+      _titleController.text = _wordsSpoken; // Add the recognized words to the TextField
+    });
+  }
+
 
   Future<void> _fetchToken() async {
     try {
@@ -51,6 +84,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
   }
 
+
   Future<void> _handleStartDatePicker() async {
     final DateTime? date = await showDatePicker(
       context: context,
@@ -62,6 +96,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       _startDateController.text = _dateFormatter.format(date);
     }
   }
+
 
   Future<void> _handleDueDatePicker() async {
     final DateTime? date = await showDatePicker(
@@ -75,11 +110,13 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
   }
 
+
   Future<void> _submitTask() async {
     if (_formKey.currentState!.validate()) {
       try {
         final startDate = _dateFormatter.parse(_startDateController.text);
         final dueDate = _dateFormatter.parse(_dueDateController.text);
+
 
         final response = await http.post(
           Uri.parse('$baseurl/task/createtask'),
@@ -96,12 +133,12 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           }),
         );
 
+
         if (response.statusCode == 200) {
           Fluttertoast.showToast(msg: "Task added successfully!");
-           Navigator.pop(context, true);  // Return true after successful task addition
+          Navigator.pop(context, true); // Return true after successful task addition
         } else {
-          Fluttertoast.showToast(
-              msg: "Failed to add task. Status: ${response.statusCode}");
+          Fluttertoast.showToast(msg: "Failed to add task. Status: ${response.statusCode}");
         }
       } catch (e) {
         Fluttertoast.showToast(msg: "Error: $e");
@@ -109,25 +146,58 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Create Task"),
+        title: const Text("Create Task"),
         backgroundColor: kPrimaryColor,
       ),
       body: Padding(
-  
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
               const SizedBox(height: 20),
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Task Name'),
-                validator: (value) => value!.isEmpty ? "Enter task name" : null,
+              Stack(
+                alignment: Alignment.centerRight,
+                children: [
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: const InputDecoration(labelText: 'Task Name'),
+                    validator: (value) => value!.isEmpty ? "Enter task name" : null,
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_speechToText.isListening)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 8.0),
+                          child: Text(
+                            "listening...",
+                            style: TextStyle(color: Colors.red, fontSize: 12),
+                          ),
+                        ),
+                      IconButton(
+                        icon: Icon(
+                          _speechToText.isListening ? Icons.mic : Icons.mic_none,
+                          color: _speechToText.isListening ? Colors.red : Colors.black,
+                        ),
+                        onPressed: _speechEnabled
+                            ? () {
+                                if (_speechToText.isListening) {
+                                  _stopListening();
+                                } else {
+                                  _startListening();
+                                }
+                              }
+                            : null,
+                      ),
+                    ],
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -159,7 +229,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                // style: Color(Color.fromARGB(0, 0, 255,0)),
                 onPressed: _submitTask,
                 child: const Text("Submit Task"),
               ),
