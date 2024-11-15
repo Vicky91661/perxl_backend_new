@@ -1,4 +1,7 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 // import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pexllite/helpers/helper_functions.dart';
 import 'package:pexllite/screens/home.dart';
@@ -6,6 +9,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pexllite/screens/taskHome.dart';
 import 'package:pexllite/state_management/contact_provider.dart';
+import 'package:pexllite/utils/MyCustomNotification.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 import './screens/welcome.dart';
 import 'state_management/group_provider.dart';
@@ -16,6 +20,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  await MyCustomNotification.initNotification();
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (_) => GroupProvider()),
@@ -43,6 +50,19 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _getUserLoggedInStatusandToken();
     _fetchPhoneContacts();
+    MyCustomNotification.getFcmToken();
+    setupFlutterNotifications();
+  }
+
+  void setupFlutterNotifications() async {
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+    print("Inside the setupFlutterNotifications");
+    MyCustomNotification.getFirebaseMesagingInBackground();
+    MyCustomNotification.getFirebaseMesagingInForeground(context);
+    // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
 
   Future<void> _fetchBackendContacts() async {
@@ -71,6 +91,7 @@ class _MyAppState extends State<MyApp> {
       print("Error fetching contacts from backend: $e");
     }
   }
+
   Future<void> _fetchPhoneContacts() async {
     final permissionStatus = await Permission.contacts.status;
     if (permissionStatus.isGranted) {

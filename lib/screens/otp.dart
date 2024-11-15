@@ -3,6 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:pexllite/constants.dart';
+import 'package:pexllite/utils/MyCustomNotification.dart';
 import 'home.dart';
 import 'package:pexllite/helpers/helper_functions.dart';
 
@@ -131,11 +132,13 @@ class _OTPScreenState extends State<OTPScreen> {
   void verifyOtp(String phoneNumber, String otp) async {
     if (_formKey.currentState!.validate()) {
       // Call your backend API to verify the OTP
+      // Retrieve the FCM token
+      String fcmToken = await MyCustomNotification.getFcmToken();
       try {
         final response = await http.post(
           Uri.parse('$baseurl/user/verifyotp'),
           headers: {"Content-Type": "application/json"},
-          body: jsonEncode({"phoneNumber": phoneNumber, "otp": otp}),
+          body: jsonEncode({"phoneNumber": phoneNumber, "otp": otp,"fcmToken": fcmToken}),
         );
 
         if (response.statusCode == 200) {

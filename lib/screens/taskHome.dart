@@ -445,10 +445,13 @@ class _TaskHomeScreenState extends State<TaskHomeScreen> {
                         title: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              task['taskName'].toUpperCase(),
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
+                           Expanded(
+                              child: Text(
+                                task['taskName'].toUpperCase(),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                overflow: TextOverflow.ellipsis, // Adds "..." at the end if too long
+                                maxLines: 1, // Limits to one line
+                              ),
                             ),
                             Row(
                               children: [

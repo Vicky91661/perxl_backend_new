@@ -157,6 +157,7 @@ class LoginScreenState extends State<LoginScreen> {
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({"phoneNumber": phoneNumber}),
         );
+        print("The resposne i got");
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -172,7 +173,7 @@ class LoginScreenState extends State<LoginScreen> {
         } else {
           // Handle error response
           final errorMessage =
-              jsonDecode(response.body)['error'] ?? 'Failed to send OTP';
+              jsonDecode(response.body)['message'] ?? 'Failed to send OTP';
           Fluttertoast.showToast(msg: errorMessage);
         }
       } catch (e) {
@@ -181,5 +182,3 @@ class LoginScreenState extends State<LoginScreen> {
     }
   }
 }
-
-

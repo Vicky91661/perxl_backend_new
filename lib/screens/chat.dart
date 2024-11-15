@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io'; // Import to display image from file
 import 'package:pexllite/constants.dart';
 import 'package:pexllite/api_services/socket_service.dart';
 import 'package:pexllite/api_services/message_api_service.dart';
+import 'package:pexllite/screens/FilePreviewScreen.dart';
+import 'package:http/http.dart' as http;
+import 'package:pexllite/screens/MyPdfViewer.dart';
+import 'package:video_player/video_player.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:pdf_render/pdf_render_widgets.dart';
 
 class ChatScreen extends StatefulWidget {
   final String taskId;
@@ -40,11 +48,42 @@ class _ChatScreenState extends State<ChatScreen> {
       type: FileType.custom,
       allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'mp4'],
     );
-
     if (result != null) {
-      setState(() {
-        selectedFilePath = result.files.single.path; // Store selected file path
+      String filePath = result.files.single.path!;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FilePreviewScreen(
+            filePath: filePath,
+            onSend: () => _sendFile(filePath),
+          ),
+        ),
+      ).then((fileSent) {
+        if (fileSent == true) {
+          _fetchMessages(); // Refresh messages to display the sent file
+        }
       });
+    }
+  }
+
+  Future<void> _sendFile(String filePath) async {
+    try {
+      var messageData = {
+        'taskId': widget.taskId,
+        'filePath': filePath, // Include file path if any
+      };
+      var sentMessage = await _apiService.sendFileMessage(messageData);
+      print(
+          "Inside the chating Screen, The response from sendFileMessage is $sentMessage");
+      setState(() {
+        if (sentMessage != null) {
+          messages.insert(0, sentMessage); // Add to message list
+        }
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error uploading File: $e')),
+      );
     }
   }
 
@@ -53,21 +92,14 @@ class _ChatScreenState extends State<ChatScreen> {
     _messageController.clear();
 
     // If there's a message or file selected, proceed
-    if(messageText.isNotEmpty){
-      
-    }
-    if (messageText.isNotEmpty || selectedFilePath != null) {
+    if (messageText.isNotEmpty) {
       var messageData = {
         'taskId': widget.taskId,
         'message': messageText,
-        'filePath': selectedFilePath, // Include file path if any
+        'isMessage':true,
       };
-
       // Send message with file if applicable
-      var sentMessage = await (selectedFilePath == null
-          ? _apiService.sendMessage(messageData)
-          : _apiService.sendFileMessage(messageData));
-
+      var sentMessage = await _apiService.sendMessage(messageData);
       setState(() {
         if (sentMessage != null) {
           messages.insert(0, sentMessage); // Add to message list
@@ -86,15 +118,13 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessage(Map<String, dynamic> messageData) {
-    final bool isCurrentUser =
-        messageData['sender']['_id'] == widget.currentUserId;
+    final bool isCurrentUser = messageData['sender']['_id'] == widget.currentUserId;
     final sender = messageData['sender'];
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
       child: Row(
-        mainAxisAlignment:
-            isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           if (!isCurrentUser) ...[
             CircleAvatar(
@@ -104,9 +134,7 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(width: 8),
           ],
           Column(
-            crossAxisAlignment: isCurrentUser
-                ? CrossAxisAlignment.end
-                : CrossAxisAlignment.start,
+            crossAxisAlignment: isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               if (!isCurrentUser)
                 Text(
@@ -117,9 +145,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
               Container(
-                padding: const EdgeInsets.all(12),
-                constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.7),
+                padding:messageData['isMessage']? const EdgeInsets.all(12):const EdgeInsets.all(0),
+                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
                 decoration: BoxDecoration(
                   color: isCurrentUser ? kPrimaryColor : Colors.grey[300],
                   borderRadius: BorderRadius.circular(15),
@@ -127,24 +154,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (messageData['message'] != null)
+                    if (messageData['isMessage'])
                       Text(
                         messageData['message'],
                         style: TextStyle(
                           color: isCurrentUser ? Colors.white : Colors.black,
                         ),
                       ),
-                    if (messageData['fileUrl'] != null) // Display file link
-                      GestureDetector(
-                        onTap: () {
-                          // Open the file link
-                        },
-                        child: Text(
-                          '📎 File attachment',
-                          style: TextStyle(
-                              color: isCurrentUser ? Colors.white : Colors.blue),
-                        ),
-                      ),
+                    if (!messageData['isMessage'])
+                      _buildFileWidget(messageData['message']),
                   ],
                 ),
               ),
@@ -153,6 +171,51 @@ class _ChatScreenState extends State<ChatScreen> {
           if (isCurrentUser) const SizedBox(width: 8),
         ],
       ),
+    );
+  }
+  Widget _buildFileWidget(String fileUrl) {
+    if (fileUrl.endsWith('.jpg') || fileUrl.endsWith('.jpeg') || fileUrl.endsWith('.png')) {
+      return Image.network(
+        fileUrl,
+        height: 320, // Adjust as needed
+        fit: BoxFit.cover,
+      );
+    } else if (fileUrl.endsWith('.mp4')) {
+      return _buildVideoPlayer(fileUrl);
+    } else if (fileUrl.endsWith('.pdf')) {
+      return GestureDetector(
+        onTap: () async {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MyPdfViewer(pdfUrl: fileUrl),
+          ),
+        );
+      },
+        child: Text(
+          '📎 PDF Attachment',
+          style: TextStyle(color: Colors.blue),
+        ),
+      );
+    } else {
+      return Text('Unsupported file type');
+    }
+  }
+
+  Widget _buildVideoPlayer(String videoUrl) {
+    VideoPlayerController _controller = VideoPlayerController.network(videoUrl);
+    return FutureBuilder(
+      future: _controller.initialize(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return AspectRatio(
+            aspectRatio: _controller.value.aspectRatio,
+            child: VideoPlayer(_controller),
+          );
+        } else {
+          return CircularProgressIndicator();
+        }
+      },
     );
   }
 
@@ -174,6 +237,40 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
+          if (selectedFilePath != null) // Show preview if an image is selected
+            Container(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  if (selectedFilePath!.endsWith('.jpg') ||
+                      selectedFilePath!.endsWith('.jpeg') ||
+                      selectedFilePath!.endsWith('.png'))
+                    Image.file(
+                      File(selectedFilePath!),
+                      height: 500,
+                      fit: BoxFit.cover,
+                    ),
+                  const SizedBox(height: 5),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "File selected. Tap send to proceed.",
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.red),
+                        onPressed: () {
+                          setState(() {
+                            selectedFilePath = null;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             color: Colors.grey[200],

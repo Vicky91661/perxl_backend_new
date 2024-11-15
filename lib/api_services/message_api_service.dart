@@ -59,34 +59,40 @@ class MessageApiService {
 
   Future<dynamic> sendFileMessage(Map<String, dynamic> body) async {
     try {
-      String? filePath = body['filePath'];
+      String filePath = body['filePath'];
       var request = http.MultipartRequest(
           'POST', Uri.parse('$baseUrl/message/sendfilemessage'));
 
       // Add headers
       var headers = await _getHeaders();
       request.headers.addAll(headers);
-
-      // Add text fields
       request.fields['taskId'] = body['taskId'];
-      if (body['message'] != null) {
-        request.fields['message'] = body['message'];
-      }
 
-      // Attach file if path is provided
-      if (filePath != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'file',
-          filePath,
-        ));
-      }
+      // Attach file
+      request.files.add(await http.MultipartFile.fromPath(
+        'file',
+        filePath,
+      ));
 
       // Send request
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
-      print("THE RESPONSE I GOT FROM FILE UPLOAD FUNCTION IS ${jsonDecode(response.body)}");
+      
       if (response.statusCode == 200) {
-        return jsonDecode(response.body); // Return the parsed response
+        var responseData = jsonDecode(response.body);
+        String uploadedUrl = responseData['url'];
+
+        print("THE RESPONSE I GOT FROM FILE UPLOAD FUNCTION IS $uploadedUrl");
+
+        Map<String, dynamic> messageData = {
+          'taskId': body['taskId'],
+          'message': uploadedUrl,
+          'isMessage':false
+        };
+        var messageResponse = await sendMessage(messageData);
+        print("The Resposne from the message update is $messageResponse");
+        return messageResponse;
+
       } else {
         print('Error in sendFileMessage API: ${response.statusCode}');
       }
