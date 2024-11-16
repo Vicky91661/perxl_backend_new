@@ -78,11 +78,10 @@ class _OTPScreenState extends State<OTPScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: kPrimaryColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_outlined),
-          color: primary,
+          icon: const Icon(Icons.arrow_back,color: Colors.white),
           onPressed: () {
             Navigator.of(context).pop();
           },

@@ -50,7 +50,6 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _getUserLoggedInStatusandToken();
     _fetchPhoneContacts();
-    MyCustomNotification.getFcmToken();
     setupFlutterNotifications();
   }
 
@@ -94,6 +93,8 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _fetchPhoneContacts() async {
     final permissionStatus = await Permission.contacts.status;
+
+    final StoragePermissionStatus = await Permission.storage.status;
     if (permissionStatus.isGranted) {
       // Fetch contacts with properties like normalized phone numbers
       List<Contact> contacts =
@@ -107,6 +108,9 @@ class _MyAppState extends State<MyApp> {
         Provider.of<ContactProvider>(context, listen: false)
             .setPhoneContacts([]);
       }
+    }
+    if (StoragePermissionStatus.isDenied) {
+      await Permission.storage.request().isGranted;
     }
   }
 

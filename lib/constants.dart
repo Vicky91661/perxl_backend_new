@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const kPrimaryColor = Color.fromRGBO(143, 16, 234, 0.773);
+const kPrimaryColor = Colors.deepPurpleAccent;
 const kPrimaryLightColor = Color.fromARGB(255, 199, 151, 232);
 const Color kWhiteColor = Color(0xffffffff);
 const Color kBlackColor = Color(0xff000000);
@@ -9,7 +9,6 @@ const Color kGrey1 = Color(0xff8D9091);
 const Color kGrey2 = Color(0xffCCCCCC);
 const Color kGrey3 = Color(0xffEFEFEF);
 const Color kRed = Color(0xffC5292A);
-
 
 const double textTiny = 10.0;
 const double textSmall = 12.0;

@@ -15,6 +15,7 @@ class ConfirmGroupCreation extends StatefulWidget {
   _ConfirmGroupCreationState createState() => _ConfirmGroupCreationState();
 }
 
+
 class _ConfirmGroupCreationState extends State<ConfirmGroupCreation> {
   final TextEditingController _groupNameController = TextEditingController();
   bool _isCreating = false; // To track if group creation is in progress
@@ -23,9 +24,12 @@ class _ConfirmGroupCreationState extends State<ConfirmGroupCreation> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("New group"),
+        title: Text("New group",style:TextStyle(
+            color: Colors.white,
+          ),),
+        backgroundColor: Colors.deepPurpleAccent,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,color: Colors.white,),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -36,8 +40,8 @@ class _ConfirmGroupCreationState extends State<ConfirmGroupCreation> {
             child: Text(
               "Create",
               style: TextStyle(
-                color: _isCreating ? Colors.grey : Colors.blue,
-                fontSize: 18,
+                color: _isCreating ? Colors.grey : Colors.white,
+                fontSize: 16,
               ),
             ),
           ),
@@ -53,7 +57,6 @@ class _ConfirmGroupCreationState extends State<ConfirmGroupCreation> {
               controller: _groupNameController,
               decoration: InputDecoration(
                 hintText: "Group name",
-                prefixIcon: Icon(Icons.camera_alt),
               ),
             ),
             SizedBox(height: 20),
@@ -138,7 +141,7 @@ class _ConfirmGroupCreationState extends State<ConfirmGroupCreation> {
         Fluttertoast.showToast(msg: "Successfully created the Group");
         return true;
       } else {
-        Fluttertoast.showToast(msg: "Group not created");
+        Fluttertoast.showToast(msg: "Group not created ${jsonDecode(response.body)['message']}");
         return false;
       }
     } catch (e) {

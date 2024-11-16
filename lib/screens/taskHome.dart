@@ -409,7 +409,13 @@ class _TaskHomeScreenState extends State<TaskHomeScreen> {
       ),
       appBar: AppBar(
         backgroundColor: kPrimaryColor,
-        title: Text(widget.groupName),
+        title: Text(widget.groupName,style: TextStyle(color: Colors.white),),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back,color: Colors.white,),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

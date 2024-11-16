@@ -7,6 +7,7 @@ import 'package:pexllite/api_services/socket_service.dart';
 import 'package:pexllite/api_services/message_api_service.dart';
 import 'package:pexllite/screens/FilePreviewScreen.dart';
 import 'package:http/http.dart' as http;
+import 'package:pexllite/screens/FullScreenImageViewer.dart';
 import 'package:pexllite/screens/MyPdfViewer.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
@@ -35,6 +36,8 @@ class _ChatScreenState extends State<ChatScreen> {
   String? selectedFilePath; // Variable to store selected file path
   List<Map<String, dynamic>> messages = [];
   bool isTyping = false;
+  bool _isDisposed = false; // To track if the widget is disposed
+
 
   @override
   void initState() {
@@ -46,7 +49,7 @@ class _ChatScreenState extends State<ChatScreen> {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'mp4'],
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],//'mp4'
     );
     if (result != null) {
       String filePath = result.files.single.path!;
@@ -59,7 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
       ).then((fileSent) {
-        if (fileSent == true) {
+        if (fileSent == true && mounted) {
           _fetchMessages(); // Refresh messages to display the sent file
         }
       });
@@ -75,16 +78,26 @@ class _ChatScreenState extends State<ChatScreen> {
       var sentMessage = await _apiService.sendFileMessage(messageData);
       print(
           "Inside the chating Screen, The response from sendFileMessage is $sentMessage");
-      setState(() {
-        if (sentMessage != null) {
-          messages.insert(0, sentMessage); // Add to message list
-        }
-      });
+      if (!_isDisposed && mounted) {
+        setState(() {
+          if (sentMessage != null) {
+            messages.insert(0, sentMessage); // Add to message list
+          }
+        });
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error uploading File: $e')),
-      );
+       if (!_isDisposed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading File: $e')),
+        );
+      }
     }
+  }
+  @override
+  void dispose() {
+    _isDisposed = true; // Mark as disposed
+    _messageController.dispose();
+    super.dispose();
   }
 
   void _sendMessage() async {
@@ -175,11 +188,21 @@ class _ChatScreenState extends State<ChatScreen> {
   }
   Widget _buildFileWidget(String fileUrl) {
     if (fileUrl.endsWith('.jpg') || fileUrl.endsWith('.jpeg') || fileUrl.endsWith('.png')) {
-      return Image.network(
+     return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FullScreenImageViewer(imageUrl: fileUrl),
+          ),
+        );
+      },
+      child: Image.network(
         fileUrl,
-        height: 320, // Adjust as needed
+        height: 320, // Adjust as needed for preview
         fit: BoxFit.cover,
-      );
+      ),
+    );
     } else if (fileUrl.endsWith('.mp4')) {
       return _buildVideoPlayer(fileUrl);
     } else if (fileUrl.endsWith('.pdf')) {
@@ -224,7 +247,13 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: kPrimaryColor,
-        title: Text(widget.taskName),
+        title: Text(widget.taskName,style: TextStyle(color: Colors.white),),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back,color: Colors.white,),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: Column(
         children: [

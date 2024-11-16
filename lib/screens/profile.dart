@@ -565,15 +565,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       );
-      print("The updated url is $updatedUrl");
-      // If an updated URL is returned, update the state
       if (updatedUrl != null && updatedUrl is String) {
         setState(() {
           profilePicUrl = updatedUrl;
         });
       }
     }
-    // print("The image is $_profileImage");
   }
 
   void getDetails() async {
@@ -640,10 +637,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
-        backgroundColor: Colors.deepPurpleAccent,
+        title: const Text('Edit Profile',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: kPrimaryColor,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,color: Colors.white,),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -653,7 +654,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
               // Profile Picture and Edit Button
@@ -661,102 +662,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Stack(
                   children: [
                     CircleAvatar(
-                      radius: 55,
+                      radius: 60,
                       backgroundColor: Colors.grey[300],
                       backgroundImage: profilePicUrl.isNotEmpty
                           ? NetworkImage(profilePicUrl) as ImageProvider
                           : null,
                       child: profilePicUrl.isEmpty
-                          ? Icon(Icons.person,
-                              size: 50, color: Colors.grey[700])
+                          ? Icon(Icons.person, size: 60, color: Colors.grey[700])
                           : null,
                     ),
                     Positioned(
                       bottom: 0,
-                      right: 4,
+                      right: 8,
                       child: InkWell(
                         onTap: _pickFile,
                         child: Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.blue,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.edit,
-                              color: Colors.white, size: 18),
+                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               const Text(
-                'Update your profile details',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-              Text(
                 'First Name',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
-                textAlign: TextAlign.left, // Aligning the label to the left
               ),
-              // First Name
+              const SizedBox(height: 5),
               TextFormField(
                 controller: firstNameController,
                 decoration: InputDecoration(
-                  hintText: 'First Name',
-                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  hintText: 'Enter your first name',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
+              const SizedBox(height: 20),
+              const Text(
                 'Last Name',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
-                textAlign: TextAlign.left, // Aligning the label to the left
               ),
-              // Last Name
+              const SizedBox(height: 5),
               TextFormField(
                 controller: lastNameController,
                 decoration: InputDecoration(
-                  hintText: 'Last Name',
-                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  hintText: 'Enter your last name',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              // Phone Number (read-only)
-              Text(
+              const SizedBox(height: 20),
+              const Text(
                 'Phone Number',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: 5),
               TextFormField(
                 controller: phoneNumberController,
                 readOnly: true,
                 decoration: InputDecoration(
-                  hintText: 'Phone Number',
-                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  hintText: 'Your phone number',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              // Save Button
+              const SizedBox(height: 30),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(45),
@@ -766,27 +754,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 onPressed: updateProfile,
-                child:
-                    const Text('Save Changes', style: TextStyle(fontSize: 16)),
+                child: const Text('Save Changes', style: TextStyle(fontSize: 16)),
               ),
               const SizedBox(height: 20),
-              // Logout Button
-              TextButton(
-                onPressed: () async {
-                  await HelperFunctions.saveUserLoggedInSharedPreference(false);
-                  await HelperFunctions.saveUserTokenSharedPreference('');
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => WelcomeScreen()),
-                    (Route<dynamic> route) => false,
-                  );
-                },
-                child: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: Colors.redAccent,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+              Center(
+                child: TextButton(
+                  onPressed: () async {
+                    await HelperFunctions.saveUserLoggedInSharedPreference(false);
+                    await HelperFunctions.saveUserTokenSharedPreference('');
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => WelcomeScreen()),
+                      (Route<dynamic> route) => false,
+                    );
+                  },
+                  child: const Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

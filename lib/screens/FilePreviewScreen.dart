@@ -61,8 +61,11 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('File Preview'),
+        title: Text('File Preview',style: TextStyle(
+            color: Colors.white,
+          ),),
       ),
+      backgroundColor: Colors.deepPurpleAccent,
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
