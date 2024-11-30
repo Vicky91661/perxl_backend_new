@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pexllite/constants.dart';
 import 'package:pexllite/helpers/helper_functions.dart';
-import 'package:pexllite/screens/chat.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:pexllite/screens/makeGroup.dart';
@@ -11,6 +10,7 @@ import 'package:pexllite/screens/welcome.dart';
 import 'profile.dart';
 import 'package:provider/provider.dart';
 import 'package:pexllite/state_management/group_provider.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,11 +25,35 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = false;
   List<dynamic> searchResults = [];
   String searchQuery = "";
+  Map<String, int> unreadCounts = {}; // Store unread counts for each group
+  late IO.Socket _socket;
 
   @override
   void initState() {
     super.initState();
     _fetchToken();
+    _initializeSocket();
+  }
+   void _initializeSocket() {
+    _socket = IO.io(serverurl, <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': true,
+    });
+
+    _socket.onConnect((_) {
+      print('Connected to Socket.IO server');
+    });
+
+    _socket.on('updateUnreadCount', (data) {
+      print("Received unread count update: $data");
+      setState(() {
+        unreadCounts[data['taskId']] = data['unreadCount'];
+      });
+    });
+
+    _socket.onDisconnect((_) {
+      print('Disconnected from Socket.IO server');
+    });
   }
 
   Future<void> _fetchToken() async {
@@ -44,9 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
         _fetchGroups();
       }
     } catch (e) {
-      setState(() {
-        _token = '';
-      });
+      if (mounted) {
+        setState(() {
+          _token = '';
+        });
+      }
       Fluttertoast.showToast(msg: "Invalid User");
       await Navigator.pushAndRemoveUntil(
         context,
@@ -58,7 +84,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchGroups() async {
     try {
-      setState(() => isLoading = true);
+       print('The base url is $baseurl');
+      if (mounted) setState(() => isLoading = true);
       final response =
           await http.get(Uri.parse('$baseurl/group/fetchgroups'), headers: {
         'authorization': 'Bearer $_token',
@@ -68,13 +95,56 @@ class _HomeScreenState extends State<HomeScreen> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         final groups = responseData['groups'];
-        Provider.of<GroupProvider>(context, listen: false).setGroups(groups);
+        if (mounted) {
+          Provider.of<GroupProvider>(context, listen: false).setGroups(groups);
+          // Join groups' rooms via Socket.IO
+          for (var group in groups) {
+            _socket.emit('joinRoom', group['_id']);
+          }
+
+          // Fetch initial unread counts for the groups
+          _fetchUnreadCounts(groups);
+        }
+      } else {
+        throw Exception('Failed to load groups');
       }
     } catch (e) {
-      Fluttertoast.showToast(msg: "Error fetching Groups: $e");
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        Fluttertoast.showToast(msg: "Server is down, please try again later.");
+      }
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false); // Stop loading
     }
+  }
+  Future<void> _fetchUnreadCounts(List<dynamic> groups) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseurl/message/unreadcounts'),
+        headers: {
+          'authorization': 'Bearer $_token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        setState(() {
+          unreadCounts = { for (var group in groups) group['_id'] : responseData[group['_id']] ?? 0 };
+        });
+      }
+    } catch (e) {
+      print("Error fetching unread counts: $e");
+    }
+  }
+
+
+  @override
+  void dispose() {
+    // Cancel or clear any async operations if necessary
+    super.dispose();
   }
 
   void _onItemTapped(int index) async {
@@ -106,6 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _handleSearch(String query) async {
     setState(() => searchQuery = query);
     try {
+      print('The base url is $baseurl');
       final response = await http.get(Uri.parse('$baseurl/'), headers: {
         'Authorization': 'Bearer $_token',
         'Content-Type': 'application/json',
@@ -136,52 +207,59 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              onChanged: _handleSearch,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.grey[200],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide.none,
+      body: isLoading
+          ? Center(child: CircularProgressIndicator()) // Show loading spinner
+          : groupProvider.groups.isEmpty
+              ? Center(
+                  child: Text('No groups found')) // Show if no groups are found
+              : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        // onChanged: _handleSearch,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.grey[200],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide.none,
+                          ),
+                          hintText: 'Search group...',
+                          prefixIcon: const Icon(Icons.search),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: searchQuery.isNotEmpty
+                            ? searchResults.length
+                            : groupProvider.groups.length,
+                        itemBuilder: (context, index) {
+                          final group = searchQuery.isNotEmpty
+                              ? searchResults[index]
+                              : groupProvider.groups[index];
+                          return ListTile(
+                            leading: CircleAvatar(
+                                backgroundImage:
+                                    NetworkImage("${group['photo']}")),
+                            title: Text(group['GroupName']),
+                            // subtitle: Text(group['latestMessage'] ?? 'No message'),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => TaskHomeScreen(
+                                        groupId: group['_id'],
+                                        groupName: group['GroupName'],
+                                        groupProfile: group['photo'],
+                                      )),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                hintText: 'Search group...',
-                prefixIcon: const Icon(Icons.search),
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: searchQuery.isNotEmpty
-                  ? searchResults.length
-                  : groupProvider.groups.length,
-              itemBuilder: (context, index) {
-                final group = searchQuery.isNotEmpty
-                    ? searchResults[index]
-                    : groupProvider.groups[index];
-                return ListTile(
-                  leading: CircleAvatar(
-                      backgroundImage: NetworkImage("${group['photo']}")),
-                  title: Text(group['GroupName']),
-                  // subtitle: Text(group['latestMessage'] ?? 'No message'),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => TaskHomeScreen(
-                            groupId: group['_id'],
-                            groupName: group['GroupName'],
-                            )),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         selectedItemColor: kPrimaryColor,

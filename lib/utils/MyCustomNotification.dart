@@ -1,10 +1,11 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 const AndroidNotificationChannel channel = AndroidNotificationChannel(
   'high_importance_channel', // id
-  'High Importance Notifications', // title
+  'High Importance Notifications', // name
   description:
       'This channel is used for important notifications.', // description
   importance: Importance.high,
@@ -19,11 +20,10 @@ class MyCustomNotification {
     // request permission from user (will prompt user)
     final firebaseMessaging = FirebaseMessaging.instance;
     await firebaseMessaging.requestPermission();
-
   }
 
-  static getFirebaseMesagingInBackground() async {
-
+  static Future<dynamic> getFirebaseMesagingInBackground() async {
+    await Firebase.initializeApp();
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
@@ -64,7 +64,8 @@ class MyCustomNotification {
       }
     });
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message)async {
+      // await Firebase.initializeApp();
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
       if (notification != null && android != null) {

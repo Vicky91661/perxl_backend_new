@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pexllite/constants.dart';
 import 'package:pexllite/helpers/helper_functions.dart';
 import 'package:pexllite/screens/confirmMakeGroup.dart';
+import 'package:pexllite/screens/welcome.dart';
 import 'package:pexllite/state_management/contact_provider.dart';
 import 'package:provider/provider.dart';
 
 class MakeGroupScreen extends StatefulWidget {
-  final String token;
+  final String groupdId;
 
-  const MakeGroupScreen({super.key, required this.token});
+  const MakeGroupScreen({super.key, required this.groupdId});
 
   @override
   _MakeGroupScreenState createState() => _MakeGroupScreenState();
@@ -17,13 +19,37 @@ class MakeGroupScreen extends StatefulWidget {
 class _MakeGroupScreenState extends State<MakeGroupScreen> {
   List<dynamic> selectedContacts = []; // Track selected contacts
   List<dynamic> filteredContacts = []; // For search filtering
-  String _currentUserid='';
   String searchQuery = '';
+  
+  String _token = '';
+  String _currentUserId = '';
 
   @override
   void initState() {
     super.initState();
+    _fetchTokenandUserId();
     _filterIntersectedContacts(); // Initialize filtered contacts with intersectedContacts
+  }
+
+  Future<void> _fetchTokenandUserId() async {
+    try {
+      String? token = await HelperFunctions.getUserTokenSharedPreference();
+      String? currentUserid = await HelperFunctions.getUserIdSharedPreference();
+      print("THe token and the cureent user id is $token and $currentUserid");
+      if (token != null && currentUserid != null && mounted) {
+        setState(() {
+          _token = token;
+          _currentUserId = currentUserid;
+        });
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Invalid User");
+      await Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => WelcomeScreen()),
+        (route) => false,
+      );
+    }
   }
 
   void _handleSearch(String query) {
@@ -42,29 +68,15 @@ class _MakeGroupScreenState extends State<MakeGroupScreen> {
   }
 
   // Initialize filteredContacts with intersectedContacts initially
-  void _filterIntersectedContacts() async {
-    String? currentUserid = await HelperFunctions.getUserIdSharedPreference();
-    if(currentUserid!=null){
-       setState(() {
-        _currentUserid = currentUserid;
-      });
-    }
+  void _filterIntersectedContacts() {
     List<dynamic> intersectedContacts =
         Provider.of<ContactProvider>(context, listen: false)
             .intersectedContacts;
-
-  // Remove the user from filteredContacts whose _id matches the currentUserid
-    List<dynamic> filtered = intersectedContacts.where((contact) {
-      return contact['_id'] != _currentUserid;
-    }).toList();
-
-    
     setState(() {
-      filteredContacts = filtered;
+      filteredContacts = intersectedContacts;
     });
-
     print(
-        "The intersected contact is INSIDE THE MAKE GROUPS $filteredContacts");
+        "The intersected contact is INSIDE THE MAKE GROUPS $intersectedContacts");
   }
 
   void _toggleSelection(dynamic contact) {
@@ -101,7 +113,7 @@ class _MakeGroupScreenState extends State<MakeGroupScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => ConfirmGroupCreation(
-                          token: widget.token,
+                          token: _token,
                           selectedUsers: selectedContacts,
                         ),
                       ),
@@ -109,7 +121,7 @@ class _MakeGroupScreenState extends State<MakeGroupScreen> {
                   }
                 : null, // Disable the button if fewer than 2 contacts are selected
             child: Text(
-              'Next',
+              'Add',
               style: TextStyle(
                 color: selectedContacts.isNotEmpty
                     ? Colors.white

@@ -46,6 +46,8 @@ class _OTPScreenState extends State<OTPScreen> {
       },
       textInputAction: TextInputAction.done,
       decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white, 
         prefixIcon: const Icon(Icons.security),
         contentPadding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
         hintText: "Enter OTP",
@@ -92,7 +94,7 @@ class _OTPScreenState extends State<OTPScreen> {
           child: Container(
             color: Colors.white,
             child: Padding(
-              padding: const EdgeInsets.all(25),
+              padding: const EdgeInsets.fromLTRB(25, 0, 25, 0),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -100,7 +102,7 @@ class _OTPScreenState extends State<OTPScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     const SizedBox(
-                      height: 150,
+                      height: 200,
                       child: Image(
                         image: AssetImage("assets/images/logo.png"),
                         width: 90,

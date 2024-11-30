@@ -33,6 +33,9 @@
     <key>NSMicrophoneUsageDescription</key>
     <string>Permission required to change audio to text</string>
 	<key>UISupportedInterfaceOrientations</key>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to take photos</string>
+
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>

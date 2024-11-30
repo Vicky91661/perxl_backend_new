@@ -5,6 +5,9 @@ import 'package:pexllite/helpers/helper_functions.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:pexllite/screens/welcome.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 class AboutTaskScreen extends StatefulWidget {
   final String taskId;
@@ -30,26 +33,64 @@ class _AboutTaskScreenState extends State<AboutTaskScreen> {
   final List<String> _priorityOptions = ["Low", "Normal", "Medium", "High", "Critical"];
   final List<String> _statusOptions = ["Todo", "Working", "Completed"];
   final DateFormat _dateFormatter = DateFormat('MMM dd, yyyy');
+  final SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  String _wordsSpoken = "";
 
   @override
   void initState() {
     super.initState();
     _fetchTokenAndTaskDetails();
+    initSpeech();
+  }
+  void initSpeech() async {
+    bool speechEnabledResult = await _speechToText.initialize();
+    setState(() {
+      _speechEnabled = speechEnabledResult;
+    });
+  }
+
+
+  void _startListening() async {
+    await _speechToText.listen(onResult: _onSpeechResult);
+  }
+
+
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {});
+  }
+
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _wordsSpoken = result.recognizedWords;
+      taskNameController.text = _wordsSpoken; // Add the recognized words to the TextField
+    });
   }
 
   Future<void> _fetchTokenAndTaskDetails() async {
+  
     try {
       final token = await HelperFunctions.getUserTokenSharedPreference();
-      if (token != null) {
+      if (token != null && mounted) {
         setState(() => _token = token);
         await _fetchTaskDetails();
       } else {
         Fluttertoast.showToast(msg: "Authentication failed.");
-        Navigator.pop(context);
+        await Navigator.pushAndRemoveUntil(
+          context,
+         MaterialPageRoute(builder: (context) => WelcomeScreen()),
+          (route) => false,
+        );
       }
     } catch (e) {
-      Fluttertoast.showToast(msg: "Error fetching token.");
-      Navigator.pop(context);
+     Fluttertoast.showToast(msg: "Invalid User");
+      await Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => WelcomeScreen()),
+        (route) => false,
+      );
     }
   }
 
@@ -143,7 +184,22 @@ class _AboutTaskScreenState extends State<AboutTaskScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Task'),
+        title: const Text(
+          'Edit Task',
+           style: TextStyle(
+              color: Colors.white,
+            )
+          ),
+        backgroundColor: kPrimaryColor,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -154,13 +210,66 @@ class _AboutTaskScreenState extends State<AboutTaskScreen> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      TextFormField(
-                        controller: taskNameController,
-                        decoration: const InputDecoration(labelText: 'Task Name'),
-                        validator: (value) =>
-                            value!.isEmpty ? "Task name cannot be empty" : null,
+                      const SizedBox(height: 20),
+                      Stack(
+                        alignment: Alignment.centerRight,
+                        children: [
+                          TextFormField(
+                            controller: taskNameController,
+                            decoration: InputDecoration(
+                              labelText: 'Task Name',
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            validator: (value) => value!.isEmpty ? "Enter task name" : null,
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_speechToText.isListening)
+                                const Padding(
+                                  padding: EdgeInsets.only(right: 8.0),
+                                  child: Text(
+                                    "listening...",
+                                    style: TextStyle(color: Colors.red, fontSize: 12),
+                                  ),
+                                ),
+                              IconButton(
+                                icon: Icon(
+                                  _speechToText.isListening ? Icons.mic : Icons.mic_none,
+                                  color: _speechToText.isListening ? Colors.red : Colors.black,
+                                ),
+                                onPressed: _speechEnabled
+                                    ? () {
+                                        if (_speechToText.isListening) {
+                                          _stopListening();
+                                        } else {
+                                          _startListening();
+                                        }
+                                      }
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 10),
+                      // TextFormField(
+                      //   controller: taskNameController,
+                      //   decoration: InputDecoration(
+                      //       labelText: 'Task Name',
+                      //       filled: true,
+                      //       fillColor: Colors.white,
+                      //       border: OutlineInputBorder(
+                      //         borderRadius: BorderRadius.circular(12),
+                      //       ),
+                      //   ),
+                      //   validator: (value) =>
+                      //       value!.isEmpty ? "Task name cannot be empty" : null,
+                      // ),
+                      const SizedBox(height: 15),
                       DropdownButtonFormField<String>(
                         value: _priority,
                         items: _priorityOptions.map((priority) {
@@ -172,9 +281,16 @@ class _AboutTaskScreenState extends State<AboutTaskScreen> {
                         onChanged: (value) => setState(() {
                           _priority = value!;
                         }),
-                        decoration: const InputDecoration(labelText: 'Priority'),
+                        decoration:  InputDecoration(
+                          labelText: 'Priority',
+                           filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 15),
                       DropdownButtonFormField<String>(
                         value: _status,
                         items: _statusOptions.map((status) {
@@ -186,20 +302,42 @@ class _AboutTaskScreenState extends State<AboutTaskScreen> {
                         onChanged: (value) => setState(() {
                           _status = value!;
                         }),
-                        decoration: const InputDecoration(labelText: 'Status'),
+                        decoration:  InputDecoration(
+                          labelText: 'Status',
+                           filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          
+                          ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 15),
                       TextFormField(
                         readOnly: true,
                         controller: _startDateController,
-                        decoration: const InputDecoration(labelText: 'Start Date'),
+                        decoration:  InputDecoration(
+                          labelText: 'Start Date',
+                           filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         onTap: () => _selectDate(_startDateController, startDate),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 15),
                       TextFormField(
                         readOnly: true,
                         controller: _dueDateController,
-                        decoration: const InputDecoration(labelText: 'Due Date'),
+                        decoration: InputDecoration(
+                          labelText: 'Due Date',
+                           filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         onTap: () => _selectDate(_dueDateController, dueDate),
                       ),
                       const SizedBox(height: 20),

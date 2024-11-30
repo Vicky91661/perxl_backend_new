@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+var backend = dotenv.env['BACKEND_URL'];
 
 const kPrimaryColor = Colors.deepPurpleAccent;
-const kPrimaryLightColor = Color.fromARGB(255, 199, 151, 232);
+const kPrimaryLightColor = Color.fromARGB(255, 131, 96, 155);
 const Color kWhiteColor = Color(0xffffffff);
 const Color kBlackColor = Color(0xff000000);
 const Color kGrey0 = Color(0xff555555);
@@ -18,8 +21,6 @@ const double textXExtraLarge = 20.0;
 const double textBold = 30.0;
 
 const double defaultPadding = 16.0;
-
-const String baseurl = "http://192.168.29.50:3500/api/v1";
-// 192.168.166.95
-// 192.168.126.95
-// 192.168.29.50
+ 
+String baseurl = "$backend/api/v1";
+String serverurl = "$backend";

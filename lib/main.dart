@@ -2,15 +2,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-// import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pexllite/helpers/helper_functions.dart';
 import 'package:pexllite/screens/home.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:pexllite/screens/taskHome.dart';
+// import 'package:pexllite/shared/loading.dart';
 import 'package:pexllite/state_management/contact_provider.dart';
 import 'package:pexllite/utils/MyCustomNotification.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
 import './screens/welcome.dart';
 import 'state_management/group_provider.dart';
 import 'package:provider/provider.dart';
@@ -18,11 +16,49 @@ import 'state_management/user_provider.dart';
 import 'constants.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+
+const AndroidNotificationChannel channel = AndroidNotificationChannel(
+  'high_importance_channel', // id
+  'High Importance Notifications', // name
+  description:
+      'This channel is used for important notifications.', // description
+  importance: Importance.high,
+);
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // If you're going to use other Firebase services in the background, such as Firestore,
+  // make sure you call `initializeApp` before using other Firebase services.
+  await Firebase.initializeApp();
+  print("Handling a background message: $message");
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+      if (notification != null && android != null) {
+        flutterLocalNotificationsPlugin.show(
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                channel.id,
+                channel.name,
+                channelDescription: channel.description,
+                icon: '@mipmap/ic_launcher',
+              ),
+            ));
+      }
+    });
+}
 
 void main() async {
+  await dotenv.load(fileName: '.env');
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await MyCustomNotification.initNotification();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (_) => GroupProvider()),
@@ -43,29 +79,42 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   bool _isLoggedIn = false;
   String _token = '';
+  bool isLoading = true; // Add a flag for loading state
   List<Contact> phoneContacts = []; // Contacts from phone
 
   @override
   void initState() {
     super.initState();
-    _getUserLoggedInStatusandToken();
-    _fetchPhoneContacts();
-    setupFlutterNotifications();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    try {
+      await _getUserLoggedInStatusandToken();
+      await _fetchPhoneContacts();
+      setupFlutterNotifications();
+      setState(() {
+        isLoading = false; // Ensure isLoading is set to false once done
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false; // Stop loading in case of error
+      });
+      print("Initialization error: $e");
+    }
   }
 
   void setupFlutterNotifications() async {
+   
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
-    print("Inside the setupFlutterNotifications");
-    MyCustomNotification.getFirebaseMesagingInBackground();
     MyCustomNotification.getFirebaseMesagingInForeground(context);
-    // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
 
   Future<void> _fetchBackendContacts() async {
-    print("INSIDE THE BACKEND USERS "); // Fetch contacts from the backend
+    // print("INSIDE THE BACKEND USERS "); // Fetch contacts from the backend
     try {
       if (_token.isEmpty) {
         print("Token is empty");
@@ -115,15 +164,14 @@ class _MyAppState extends State<MyApp> {
   }
 
   // Function to fetch contacts from the phone
+  
   Future<void> _getContacts() async {
     try {
       List<Contact> contacts =
           await FlutterContacts.getContacts(withProperties: false);
 
-      print("The user's Phone Contact $contacts");
       Provider.of<ContactProvider>(context, listen: false)
           .setPhoneContacts(contacts);
-      // print("The user's Phone Contact $contacts");
     } catch (e) {
       print("Error fetching contacts: $e");
     }
@@ -134,10 +182,6 @@ class _MyAppState extends State<MyApp> {
       // print("inside the _getUserLoggedInStatusandToken function");
       bool? isLoggedIn =
           await HelperFunctions.getUserLoggedInSharedPreference();
-      String? token = await HelperFunctions.getUserTokenSharedPreference();
-
-      print("THE VALUE OF ISLOGGEDIN IS $isLoggedIn");
-      print("THE VALUE OF TOKEN IS $token");
 
       if (isLoggedIn != null && mounted) {
         String? token = await HelperFunctions.getUserTokenSharedPreference();
@@ -146,6 +190,7 @@ class _MyAppState extends State<MyApp> {
           setState(() {
             _isLoggedIn = isLoggedIn;
             _token = token;
+            isLoading = false;
           });
           _fetchBackendContacts();
         }
@@ -154,6 +199,7 @@ class _MyAppState extends State<MyApp> {
       setState(() {
         _isLoggedIn = false;
         _token = '';
+        isLoading = false; // Set loading to false in case of error
       });
       print("The error is $e");
     }
@@ -161,6 +207,17 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      // Show loading screen until user state is fetched
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(), // Show loading indicator
+          ),
+        ),
+      );
+    }
     return MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Flutter Auth',
@@ -192,6 +249,15 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
         ),
-        home: _isLoggedIn ? const HomeScreen() : const WelcomeScreen());
+        home: isLoading
+            ? Scaffold(
+                body: Center(
+                  child:
+                      CircularProgressIndicator(), // Ensure loading indicator shows
+                ),
+              )
+            : _isLoggedIn
+                ? const HomeScreen()
+                : const WelcomeScreen());
   }
 }

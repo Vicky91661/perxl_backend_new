@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "1044954436198",
-    "project_id": "perxlite",
-    "storage_bucket": "perxlite.firebasestorage.app"
+    "project_number": "373551362385",
+    "project_id": "perxl-lite",
+    "storage_bucket": "perxl-lite.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1044954436198:android:e2b96c12d859f1cbc593a7",
+        "mobilesdk_app_id": "1:373551362385:android:86f01dc09b1ee22c5e2370",
         "android_client_info": {
           "package_name": "com.example.test_one"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBEyAN9uwLv1X8L7BCyOVKP6SLXoZW9trM"
+          "current_key": "AIzaSyBIeTcMsTMo-z_otrtRbYuXfW9bDhiaggc"
         }
       ],
       "services": {

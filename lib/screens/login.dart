@@ -1,4 +1,3 @@
-// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -6,12 +5,6 @@ import 'package:pexllite/constants.dart';
 import 'registration.dart';
 import 'otp.dart';
 import 'dart:convert';
-
-// Defining Custom colors
-const primary = Color(0xff072227);
-const secondary = Color(0xff35858B);
-const primaryLight = Color(0xff4FBDBA);
-const secondaryLight = Color(0xffAEFEFF);
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,9 +19,6 @@ class LoginScreenState extends State<LoginScreen> {
 
   // Define Editing Controller for Phone
   final TextEditingController phoneController = TextEditingController();
-
-  // Firebase Auth
-  // final _auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -46,15 +36,13 @@ class LoginScreenState extends State<LoginScreen> {
         if (!RegExp(r"^[0-9]{10}$").hasMatch(value)) {
           return ("Please enter a Valid 10-Phone Number");
         }
-
         return null;
       },
-      // onSaved: (value) {
-      //   phoneController.text = value!;
-      // },
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.mail),
+        filled: true,
+        fillColor: Colors.white, // Set background color to white
+        prefixIcon: const Icon(Icons.phone),
         contentPadding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
         hintText: "Phone Number",
         border: OutlineInputBorder(
@@ -62,6 +50,7 @@ class LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+
     // OTP Button
     final loginButton = Material(
       elevation: 4,
@@ -84,6 +73,16 @@ class LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: kPrimaryColor,
+        title: const Text("Login",style: TextStyle(color: Colors.white),),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back,color: Colors.white,),
+          onPressed: () {
+            Navigator.pop(context); // Navigate back to the previous screen
+          },
+        ),
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: Container(
@@ -96,16 +95,16 @@ class LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    // const SizedBox(
-                    //   height: 200,
-                    //   child: Image(
-                    //     image: AssetImage("assets/images/logo.png"),
-                    //     width: 90,
-                    //     height: 90,
-                    //     fit: BoxFit.contain,
-                    //   ),
-                    // ),
-                    // const SizedBox(height: 35),
+                    const SizedBox(
+                      height: 200,
+                      child: Image(
+                        image: AssetImage("assets/images/logo.png"),
+                        width: 90,
+                        height: 90,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(height: 35),
                     emailField,
                     const SizedBox(height: 30),
                     loginButton,
@@ -157,13 +156,13 @@ class LoginScreenState extends State<LoginScreen> {
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({"phoneNumber": phoneNumber}),
         );
-        print("The resposne i got");
+        print("The response I got");
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
-          print("successfull response $data");
+          print("successful response $data");
           // Fluttertoast.showToast(msg: "OTP sent successfully!");
-          print("after the tost");
+          print("after the toast");
           // Navigate to OTPScreen and pass the phone number
           Navigator.push(
             context,

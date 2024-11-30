@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:pexllite/screens/login.dart';
+import 'package:pexllite/screens/otp.dart';
 import 'package:pexllite/screens/registration.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // For SVG handling
 import '../../../constants.dart';
@@ -17,21 +18,22 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              // Welcome text
+              const Text(
+                "Welcome to PerXL Lite",
+                style: TextStyle(
+                  fontSize: 27,
+                  fontWeight: FontWeight.bold,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(height: 40),
               // Logo image
               SvgPicture.asset(
                 'assets/images/chat.svg', // Replace with your logo path
-                height: 150, // Adjust the size according to your needs
+                height: 250, // Adjust the size according to your needs
               ),
-              const SizedBox(height: 20),
-              // Welcome text
-              const Text(
-                "Welcome to Perxl",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: kPrimaryColor,
-                ),
-              ),
+            
               const SizedBox(height: 30),
               // Sign In button
               ElevatedButton(
@@ -45,7 +47,7 @@ class WelcomeScreen extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryColor,
-                  minimumSize: const Size(200, 50),
+                  minimumSize: const Size(270, 50),
                 ),
                 child: const Text(
                   'Sign In',
@@ -65,7 +67,7 @@ class WelcomeScreen extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryLightColor,
-                  minimumSize: const Size(200, 50),
+                  minimumSize: const Size(270, 50),
                 ),
                 child: const Text(
                   'Sign Up',

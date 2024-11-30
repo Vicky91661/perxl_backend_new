@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'package:pdf_render/pdf_render_widgets.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:pexllite/constants.dart';
 import 'package:video_player/video_player.dart';
 
 class FilePreviewScreen extends StatefulWidget {
@@ -41,9 +42,8 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
         widget.filePath.endsWith('.png')) {
       return Image.file(File(widget.filePath), fit: BoxFit.cover);
     } else if (widget.filePath.endsWith('.pdf')) {
-      return PdfDocumentLoader.openFile(
-        widget.filePath,
-        pageNumber: 1,
+      return SfPdfViewer.file(
+        File(widget.filePath)
       );
     } else if (widget.filePath.endsWith('.mp4')) {
       return _videoController != null && _videoController!.value.isInitialized
@@ -61,11 +61,23 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('File Preview',style: TextStyle(
+        title: Text(
+          'File Preview',
+              style: TextStyle(
+              color: Colors.white,
+            ),
+          ),
+        backgroundColor: kPrimaryColor,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
             color: Colors.white,
-          ),),
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
-      backgroundColor: Colors.deepPurpleAccent,
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(

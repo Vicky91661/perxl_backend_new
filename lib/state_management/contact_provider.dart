@@ -20,37 +20,13 @@ class ContactProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Method to find contacts that are present in both backendContacts and phoneContacts
-  // void _updateIntersectedContacts() {
-  //   intersectedContacts = backendContacts.where((backendContact) {
-  //     final backendPhone = backendContact['phoneNumber'].toString();
-  //     phoneContacts.any((phoneContact) {
-  //       final normalizedNumber =
-  //         _normalizePhoneNumber(phoneContact.phones.first.normalizedNumber);
-  //     })
-  //   }).toSet();
-
-  // intersectedContacts = phoneContacts.where((phoneContact) {
-  //   if (phoneContact.phones.isEmpty)
-  //     return false; // Skip contacts without phone numbers
-
-  //   final normalizedNumber =
-  //       _normalizePhoneNumber(phoneContact.phones.first.normalizedNumber);
-  //   return backendContacts.any((backendContact) {
-  //     final backendPhone = backendContact['phoneNumber'].toString();
-  //     return normalizedNumber == backendPhone;
-  //   });
-  // }).toList();
-
-  //   notifyListeners();
-  //   print("Intersected Contacts: $intersectedContacts");
-  // }
   void _updateIntersectedContacts() {
     intersectedContacts = backendContacts.where((backendContact) {
       final backendPhone = backendContact['phoneNumber'].toString();
       return phoneContacts.any((phoneContact) {
-        if (phoneContact.phones.isEmpty)
+        if (phoneContact.phones.isEmpty) {
           return false; // Skip contacts without phone numbers
+        }
 
         String normalizedNumber =
             _normalizePhoneNumber(phoneContact.phones.first.normalizedNumber);

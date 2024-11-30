@@ -56,7 +56,12 @@ class _ConfirmGroupCreationState extends State<ConfirmGroupCreation> {
             TextField(
               controller: _groupNameController,
               decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white, // Set background color to white
                 hintText: "Group name",
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             SizedBox(height: 20),

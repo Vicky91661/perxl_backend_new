@@ -5,12 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:pexllite/constants.dart';
 import 'otp.dart';
 
-// Defining Colors
-Color primary = const Color(0xff072227);
-Color secondary = const Color(0xff35858B);
-Color primaryLight = const Color(0xff4FBDBA);
-Color secondaryLight = const Color(0xffAEFEFF);
-
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
 
@@ -22,17 +16,13 @@ class RegistrationScreenState extends State<RegistrationScreen> {
   // Defining a Form Key
   final _formKey = GlobalKey<FormState>();
 
-  // Defining Editing Controller
-  final TextEditingController firstNameEditingController =
-  TextEditingController();
-  final TextEditingController lastNameEditingController =
-  TextEditingController();
-  final TextEditingController phoneNumberEditingController =
-  TextEditingController();
+  // Defining Editing Controllers
+  final TextEditingController firstNameEditingController = TextEditingController();
+  final TextEditingController lastNameEditingController = TextEditingController();
+  final TextEditingController phoneNumberEditingController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    // Creating Form Fields
     // First Name Field
     final firstNameField = TextFormField(
       autofocus: false,
@@ -48,21 +38,20 @@ class RegistrationScreenState extends State<RegistrationScreen> {
         }
         return null;
       },
-      onSaved: (value) {
-        firstNameEditingController.text = value!;
-      },
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
         prefixIcon: const Icon(Icons.account_circle_outlined),
         contentPadding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
-        hintText: "First Name",
+        labelText: "First Name",
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
         ),
       ),
     );
 
-    // Last name Text Field
+    // Last Name Field
     final lastNameField = TextFormField(
       autofocus: false,
       controller: lastNameEditingController,
@@ -77,20 +66,20 @@ class RegistrationScreenState extends State<RegistrationScreen> {
         }
         return null;
       },
-      onSaved: (value) {
-        lastNameEditingController.text = value!;
-      },
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.account_circle_outlined),
-          contentPadding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
-          hintText: "Last Name",
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-          )),
+        filled: true,
+        fillColor: Colors.white,
+        prefixIcon: const Icon(Icons.account_circle_outlined),
+        contentPadding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
+        labelText: "Last Name",
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
     );
 
-    // Phone Number Text field
+    // Phone Number Field
     final phoneNumberField = TextFormField(
       autofocus: false,
       controller: phoneNumberEditingController,
@@ -99,17 +88,18 @@ class RegistrationScreenState extends State<RegistrationScreen> {
         if (value!.isEmpty) {
           return ("Please Enter your phone number.");
         }
-        // reg expression for email validation
         if (!RegExp(r"^[0-9]{10}$").hasMatch(value)) {
-          return ("Please enter a Valid 10-Phone Number");
+          return ("Please enter a valid 10-digit phone number");
         }
         return null;
       },
-      textInputAction: TextInputAction.next,
+      textInputAction: TextInputAction.done,
       decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
         prefixIcon: const Icon(Icons.phone),
         contentPadding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
-        hintText: "Phone Number",
+        labelText: "Phone Number",
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
         ),
@@ -124,9 +114,10 @@ class RegistrationScreenState extends State<RegistrationScreen> {
       child: MaterialButton(
         onPressed: () {
           signUp(
-              firstNameEditingController.text,
-              lastNameEditingController.text,
-              phoneNumberEditingController.text);
+            firstNameEditingController.text,
+            lastNameEditingController.text,
+            phoneNumberEditingController.text,
+          );
         },
         padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
         minWidth: MediaQuery.of(context).size.width,
@@ -142,46 +133,45 @@ class RegistrationScreenState extends State<RegistrationScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        backgroundColor: kPrimaryColor,
+        title: const Text("Register", style: TextStyle(color: Colors.white)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_outlined),
-          color: primary,
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(context).pop();
+            Navigator.pop(context);
           },
         ),
       ),
       body: Center(
         child: SingleChildScrollView(
           child: Container(
-            child: Padding(
-              padding: const EdgeInsets.all(35),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    const SizedBox(
-                      height: 150,
-                      child: Image(
-                        image: AssetImage("assets/images/logo.png"),
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.contain,
-                      ),
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(25, 0, 25, 0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  const SizedBox(
+                    height: 200,
+                    child: Image(
+                      image: AssetImage("assets/images/logo.png"),
+                      width: 90,
+                      height: 90,
+                      fit: BoxFit.contain,
                     ),
-                    firstNameField,
-                    const SizedBox(height: 15),
-                    lastNameField,
-                    const SizedBox(height: 15),
-                    phoneNumberField,
-                    const SizedBox(height: 15),
-                    registerButton,
-                    const SizedBox(height: 15),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 35),
+                  firstNameField,
+                  const SizedBox(height: 15),
+                  lastNameField,
+                  const SizedBox(height: 15),
+                  phoneNumberField,
+                  const SizedBox(height: 30),
+                  registerButton,
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
           ),
@@ -191,14 +181,7 @@ class RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   void signUp(String firstName, String lastName, String phoneNumber) async {
-    print("the value of first Name is ");
-    print(firstName);
-    print("the value of last Name is ");
-    print(lastName);
-    print("the value of phone number is ");
-    print(phoneNumber);
     if (_formKey.currentState!.validate()) {
-      print("insdie the signin the form is valid");
       try {
         final response = await http.post(
           Uri.parse('$baseurl/user/signup'),
@@ -206,7 +189,7 @@ class RegistrationScreenState extends State<RegistrationScreen> {
           body: jsonEncode({
             "phoneNumber": phoneNumber,
             "firstName": firstName,
-            "lastName": lastName
+            "lastName": lastName,
           }),
         );
 
@@ -217,12 +200,13 @@ class RegistrationScreenState extends State<RegistrationScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => OTPScreen(phoneNumber: phoneNumber)),
+              builder: (context) => OTPScreen(phoneNumber: phoneNumber),
+            ),
           );
         } else {
           // Handle error response
           final errorMessage =
-              jsonDecode(response.body)['error'] ?? 'Failed to send OTP';
+              jsonDecode(response.body)['message'] ?? 'Failed to send OTP';
           Fluttertoast.showToast(msg: errorMessage);
         }
       } catch (e) {

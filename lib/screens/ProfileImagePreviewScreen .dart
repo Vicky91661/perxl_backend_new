@@ -8,16 +8,27 @@ import 'package:pexllite/constants.dart';
 class ImagePreviewScreen extends StatelessWidget {
   final String imagePath;
   final String token;
+  final bool isProfile;
+  final String groupId;
 
-  ImagePreviewScreen({required this.imagePath, required this.token});
+  ImagePreviewScreen(
+      {required this.imagePath, required this.token, required this.isProfile, 
+      required this.groupId});
 
   Future<void> uploadImage(BuildContext context) async {
     try {
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseurl/user/uploadProfilePic'),
-      );
-
+      final http.MultipartRequest request;
+      if (isProfile) {
+        request = http.MultipartRequest(
+          'POST',
+          Uri.parse('$baseurl/user/uploadProfilePic'),
+        );
+      } else {
+        request = http.MultipartRequest(
+          'POST',
+          Uri.parse('$baseurl/group/uploadGroupPic'),
+        );
+      }
       request.files.add(await http.MultipartFile.fromPath('file', imagePath));
       request.headers['Authorization'] = 'Bearer $token';
       var streamedResponse = await request.send();
@@ -27,23 +38,36 @@ class ImagePreviewScreen extends StatelessWidget {
         var resposneData = jsonDecode(response.body);
         print("Inside the upload profile pic response $resposneData");
         String uploadedUrl = resposneData['url'];
-        
-        final responseUrl = await http.post(
-          Uri.parse('$baseurl/user/updateProfilePic'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({"url": uploadedUrl}),
-        );
-        if(responseUrl.statusCode == 200){
-            ScaffoldMessenger.of(context).showSnackBar(
+
+        final http.Response responseUrl;
+        if (isProfile) {
+            responseUrl = await http.post(
+            Uri.parse('$baseurl/user/updateProfilePic'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({"url": uploadedUrl}),
+          );
+        } else {
+            responseUrl = await http.post(
+            Uri.parse('$baseurl/group/updateGroupPic'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({"url": uploadedUrl,"GroupId":groupId}),
+          );
+        }
+
+        if (responseUrl.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Image uploaded successfully!')),
           );
           // Navigate back to ProfileScreen with the updated image URL
           Navigator.pop(context, uploadedUrl);
-        }else{
-            ScaffoldMessenger.of(context).showSnackBar(
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to upload image.')),
           );
         }

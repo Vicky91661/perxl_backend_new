@@ -40,6 +40,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     super.initState();
     _fetchToken();
     initSpeech();
+
+    // Set the default start and due dates to today's date
+    String todayDate = _dateFormatter.format(DateTime.now());
+    _startDateController.text = todayDate;
+    _dueDateController.text = todayDate;
   }
 
 
@@ -151,8 +156,22 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Create Task"),
+        title: const Text(
+          "Create Task",
+          style: TextStyle(
+              color: Colors.white,
+            ),
+          ),
         backgroundColor: kPrimaryColor,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -166,7 +185,14 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 children: [
                   TextFormField(
                     controller: _titleController,
-                    decoration: const InputDecoration(labelText: 'Task Name'),
+                    decoration: InputDecoration(
+                      labelText: 'Task Name',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     validator: (value) => value!.isEmpty ? "Enter task name" : null,
                   ),
                   Row(
@@ -203,14 +229,29 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               TextFormField(
                 readOnly: true,
                 controller: _startDateController,
-                decoration: const InputDecoration(labelText: 'Start Date'),
+                decoration: InputDecoration(
+                    labelText: 'Start Date',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 onTap: () => _handleStartDatePicker(),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 readOnly: true,
                 controller: _dueDateController,
-                decoration: const InputDecoration(labelText: 'Due Date'),
+                decoration:  InputDecoration(
+                  labelText: 'Due Date',
+                  filled: true,
+                  fillColor: Colors.white, 
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  
                 onTap: () => _handleDueDatePicker(),
               ),
               const SizedBox(height: 16),
@@ -219,12 +260,20 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   return DropdownMenuItem(
                     value: priority,
                     child: Text(priority),
+                    
                   );
                 }).toList(),
                 onChanged: (value) => setState(() {
                   _priority = value!;
                 }),
-                decoration: const InputDecoration(labelText: 'Priority'),
+                decoration: InputDecoration(
+                  labelText: 'Priority',
+                  filled: true,
+                  fillColor: Colors.white, 
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 validator: (value) => value == null ? "Select priority" : null,
               ),
               const SizedBox(height: 20),

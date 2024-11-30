@@ -11,7 +11,7 @@ class MessageApiService {
 
   Future<Map<String, String>> _getHeaders() async {
     String? token = await HelperFunctions.getUserTokenSharedPreference();
-    print("The token inside the getHeader is  $token");
+    // print("The token inside the getHeader is  $token");
     return {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
@@ -26,9 +26,20 @@ class MessageApiService {
         headers: headers,
         body: jsonEncode(body),
       );
-      return jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        // Decode the response body if status is OK
+        final decodedResponse = jsonDecode(response.body);
+        print("The RESPONSE FROM sendMessage is: $decodedResponse");
+        return decodedResponse;
+      } else {
+        // Handle non-200 status codes
+        print("Error in response: ${response.statusCode} ${response.reasonPhrase}");
+        final errorResponse = jsonDecode(response.body);
+        return errorResponse; // Or handle as needed
+      }
     } catch (error) {
       print('Error in sendMessage API: $error');
+      return {'error': 'Failed to send message. Please try again later.'};
     }
   }
 
@@ -66,6 +77,7 @@ class MessageApiService {
       // Add headers
       var headers = await _getHeaders();
       request.headers.addAll(headers);
+      // Add fields
       request.fields['taskId'] = body['taskId'];
 
       // Attach file
@@ -77,7 +89,7 @@ class MessageApiService {
       // Send request
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
-      
+
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
         String uploadedUrl = responseData['url'];
@@ -87,12 +99,11 @@ class MessageApiService {
         Map<String, dynamic> messageData = {
           'taskId': body['taskId'],
           'message': uploadedUrl,
-          'isMessage':false
+          'isMessage': false
         };
         var messageResponse = await sendMessage(messageData);
         print("The Resposne from the message update is $messageResponse");
         return messageResponse;
-
       } else {
         print('Error in sendFileMessage API: ${response.statusCode}');
       }
